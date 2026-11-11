@@ -1,5 +1,9 @@
 defmodule Emergencia.Albergue do
-  @moduledoc "Datos básicos de albergue. Las validaciones se implementarán después."
+  @moduledoc """
+  Estructura que representa un albergue disponible durante
+  una emergencia y permite almacenar las personas alojadas.
+  """
+
   defstruct codigo: nil,
             nombre: nil,
             zona: nil,
