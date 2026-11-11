@@ -1,5 +1,9 @@
 defmodule Emergencia.Mascota do
-  @moduledoc "Datos básicos de mascota. Las validaciones se implementarán después."
+  @moduledoc """
+  Estructura que representa un reporte de mascota perdida
+  o encontrada durante la emergencia.
+  """
+
   defstruct id: nil,
             tipo_reporte: nil,
             especie: nil,

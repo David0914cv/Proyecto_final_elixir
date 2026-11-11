@@ -1,5 +1,11 @@
 defmodule Emergencia.Persona do
-  @moduledoc "Datos básicos de persona. Las validaciones se implementarán después."
+  @moduledoc """
+  Estructura que representa a una persona afectada por la emergencia.
+
+  Almacena sus datos básicos, su estado de atención y un historial
+  de cambios relacionados con su situación.
+  """
+
   defstruct id: nil,
             nombre: nil,
             documento: nil,
@@ -10,6 +16,14 @@ defmodule Emergencia.Persona do
 end
 
 defmodule Emergencia.Mensaje do
-  @moduledoc "Mensaje familiar administrado por PersonaServer en una siguiente etapa."
-  defstruct id: nil, remitente: nil, destinatario: nil, contenido: nil, entregado: false
+  @moduledoc """
+  Estructura que representa un mensaje enviado entre familiares
+  o personas registradas en el sistema.
+  """
+
+  defstruct id: nil,
+            remitente: nil,
+            destinatario: nil,
+            contenido: nil,
+            entregado: false
 end
