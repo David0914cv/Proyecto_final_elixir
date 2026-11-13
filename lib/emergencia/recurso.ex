@@ -59,7 +59,7 @@ defmodule Emergencia.Recurso do
   #Funciones privadas
    defp registrar_movimiento(recurso, tipo, cantidad, motivo) do
     movimiento = %{tipo: tipo, cantidad: cantidad, motivo: motivo, fecha: DateTime.utc_now()}
-    %{recurso | movimientos: [movimiento | recurso.movimientos]}
+    %{recurso | historial: [movimiento | recurso.historial]}
   end
 
   defp validar_texto(valor, _error) when is_binary(valor) and byte_size(valor) > 0 do
@@ -70,6 +70,4 @@ defmodule Emergencia.Recurso do
 
   defp validar_cantidad(cantidad) when is_integer(cantidad) and cantidad >= 0, do: :ok
   defp validar_cantidad(_cantidad), do: {:error, :cantidad_invalida}
-end
-
 end
