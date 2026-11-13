@@ -9,12 +9,13 @@ defmodule Emergencia.AlbergueServer do
   alias Emergencia.Albergue
   alias Emergencia.Persistencia
 
-  @archivo "data/albergues.dat"
+  @archivo "data/albergues.txt"
 
   # --------------------------------------------------
   # INICIO DEL SERVIDOR
   # --------------------------------------------------
 
+  @doc "Inicia el servidor de albergues."
   def start_link(opts \\ []) do
     GenServer.start_link(__MODULE__, :ok, opts)
   end
@@ -51,10 +52,7 @@ defmodule Emergencia.AlbergueServer do
 
   @doc "Registra el ingreso de una persona a un albergue."
   def ingresar(codigo, documento, servidor \\ __MODULE__) do
-    GenServer.call(
-      servidor,
-      {:ingresar, codigo, documento}
-    )
+    GenServer.call(servidor, {:ingresar, codigo, documento})
   end
 
   @doc "Registra la salida de una persona de un albergue."
@@ -80,23 +78,26 @@ defmodule Emergencia.AlbergueServer do
       not validar_albergue(albergue) ->
         {:reply, {:error, "Los datos del albergue son inválidos"}, estado}
 
-      Map.has_key?(estado, albergue.codigo) ->
-        {:reply, {:error, "Ya existe un albergue con ese código"}, estado}
-
       true ->
-        # Se calcula la ocupación a partir del conjunto de personas.
-        albergue = %{
-          albergue |
-          ocupacion: MapSet.size(albergue.personas)
-        }
+        albergue = %{albergue | codigo: String.trim(albergue.codigo)}
 
-        albergues = Map.put(
-          estado,
-          albergue.codigo,
-          albergue
-        )
+        if Map.has_key?(estado, albergue.codigo) do
+          {:reply, {:error, "Ya existe un albergue con ese código"}, estado}
+        else
+          # Se calcula la ocupación a partir del conjunto de personas.
+          albergue = %{
+            albergue |
+            ocupacion: MapSet.size(albergue.personas)
+          }
 
-        guardar_albergues(albergues, estado)
+          albergues = Map.put(
+            estado,
+            albergue.codigo,
+            albergue
+          )
+
+          guardar_albergues(albergues, estado)
+        end
     end
   end
 
@@ -109,6 +110,8 @@ defmodule Emergencia.AlbergueServer do
   # --------------------------------------------------
 
   def handle_call({:consultar, codigo}, _from, estado) do
+    codigo = normalizar_texto(codigo)
+
     case Map.get(estado, codigo) do
       nil ->
         {:reply, {:error, "Albergue no encontrado"}, estado}
@@ -127,6 +130,9 @@ defmodule Emergencia.AlbergueServer do
   # --------------------------------------------------
 
   def handle_call({:ingresar, codigo, documento}, _from, estado) do
+    codigo = normalizar_texto(codigo)
+    documento = normalizar_texto(documento)
+
     case Map.get(estado, codigo) do
       nil ->
         {:reply, {:error, "Albergue no encontrado"}, estado}
@@ -171,30 +177,37 @@ defmodule Emergencia.AlbergueServer do
         _from,
         estado
       ) do
+    codigo = normalizar_texto(codigo)
+    documento = normalizar_texto(documento)
 
     case Map.get(estado, codigo) do
       nil ->
         {:reply, {:error, "Albergue no encontrado"}, estado}
 
       albergue ->
-        if MapSet.member?(albergue.personas, documento) do
-          personas = MapSet.delete(albergue.personas, documento)
+        cond do
+          not texto_valido?(documento) ->
+            {:reply, {:error, "El documento no es válido"}, estado}
 
-          actualizado = %{
-            albergue |
-            personas: personas,
-            ocupacion: MapSet.size(personas)
-          }
+          not MapSet.member?(albergue.personas, documento) ->
+            {:reply, {:error, "La persona no está registrada en este albergue"}, estado}
 
-          albergues = Map.put(
-            estado,
-            codigo,
-            actualizado
-          )
+          true ->
+            personas = MapSet.delete(albergue.personas, documento)
 
-          guardar_albergues(albergues, estado)
-        else
-          {:reply, {:error, "La persona no está registrada en este albergue"}, estado}
+            actualizado = %{
+              albergue |
+              personas: personas,
+              ocupacion: MapSet.size(personas)
+            }
+
+            albergues = Map.put(
+              estado,
+              codigo,
+              actualizado
+            )
+
+            guardar_albergues(albergues, estado)
         end
     end
   end
@@ -204,6 +217,8 @@ defmodule Emergencia.AlbergueServer do
   # --------------------------------------------------
 
   def handle_call({:disponibilidad, codigo}, _from, estado) do
+    codigo = normalizar_texto(codigo)
+
     case Map.get(estado, codigo) do
       nil ->
         {:reply, {:error, "Albergue no encontrado"}, estado}
@@ -243,6 +258,12 @@ defmodule Emergencia.AlbergueServer do
   defp texto_valido?(valor) do
     is_binary(valor) and String.trim(valor) != ""
   end
+
+  defp normalizar_texto(valor) when is_binary(valor) do
+    String.trim(valor)
+  end
+
+  defp normalizar_texto(valor), do: valor
 
   # Comprueba si un documento ya aparece en algún albergue.
   defp persona_alojada?(albergues, documento) do

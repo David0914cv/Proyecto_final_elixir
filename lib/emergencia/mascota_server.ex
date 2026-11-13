@@ -9,12 +9,13 @@ defmodule Emergencia.MascotaServer do
   alias Emergencia.Mascota
   alias Emergencia.Persistencia
 
-  @archivo "data/mascotas.dat"
+  @archivo "data/mascotas.txt"
 
   # --------------------------------------------------
   # INICIO DEL SERVIDOR
   # --------------------------------------------------
 
+  @doc "Inicia el servidor de mascotas."
   def start_link(opts \\ []) do
     GenServer.start_link(__MODULE__, :ok, opts)
   end
@@ -34,22 +35,27 @@ defmodule Emergencia.MascotaServer do
   # FUNCIONES PUBLICAS
   # --------------------------------------------------
 
+  @doc "Registra un reporte de mascota."
   def registrar(mascota, servidor \\ __MODULE__) do
     GenServer.call(servidor, {:registrar, mascota})
   end
 
+  @doc "Consulta un reporte mediante su ID."
   def consultar(id, servidor \\ __MODULE__) do
     GenServer.call(servidor, {:consultar, id})
   end
 
+  @doc "Devuelve todos los reportes de mascotas."
   def listar(servidor \\ __MODULE__) do
     GenServer.call(servidor, :listar)
   end
 
+  @doc "Busca coincidencias entre mascotas perdidas y encontradas."
   def buscar_coincidencias(servidor \\ __MODULE__) do
     GenServer.call(servidor, :buscar_coincidencias)
   end
 
+  @doc "Cierra un reporte de mascota."
   def cerrar_reporte(id, servidor \\ __MODULE__) do
     GenServer.call(servidor, {:cerrar_reporte, id})
   end
@@ -64,13 +70,16 @@ defmodule Emergencia.MascotaServer do
       not validar_mascota(mascota) ->
         {:reply, {:error, "Los datos del reporte están incompletos o son inválidos"}, estado}
 
-      Map.has_key?(estado, mascota.id) ->
-        {:reply, {:error, "Ya existe un reporte con ese ID"}, estado}
-
       true ->
-        mascotas = Map.put(estado, mascota.id, mascota)
+        mascota = %{mascota | id: String.trim(mascota.id)}
 
-        guardar_mascotas(mascotas, estado)
+        if Map.has_key?(estado, mascota.id) do
+          {:reply, {:error, "Ya existe un reporte con ese ID"}, estado}
+        else
+          mascotas = Map.put(estado, mascota.id, mascota)
+
+          guardar_mascotas(mascotas, estado)
+        end
     end
   end
 
@@ -83,6 +92,8 @@ defmodule Emergencia.MascotaServer do
   # --------------------------------------------------
 
   def handle_call({:consultar, id}, _from, estado) do
+    id = normalizar_id(id)
+
     case Map.get(estado, id) do
       nil ->
         {:reply, {:error, "Reporte no encontrado"}, estado}
@@ -123,6 +134,8 @@ defmodule Emergencia.MascotaServer do
   # --------------------------------------------------
 
   def handle_call({:cerrar_reporte, id}, _from, estado) do
+    id = normalizar_id(id)
+
     case Map.get(estado, id) do
       nil ->
         {:reply, {:error, "Reporte no encontrado"}, estado}
@@ -236,6 +249,12 @@ defmodule Emergencia.MascotaServer do
   defp tipo_valido?(tipo) do
     tipo in [:perdida, :encontrada]
   end
+
+  defp normalizar_id(id) when is_binary(id) do
+    String.trim(id)
+  end
+
+  defp normalizar_id(id), do: id
 
   # --------------------------------------------------
   # PERSISTENCIA

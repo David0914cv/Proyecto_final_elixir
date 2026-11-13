@@ -12,7 +12,7 @@ defmodule Emergencia.PersonaServer do
   alias Emergencia.Mensaje
   alias Emergencia.Persistencia
 
-  @archivo "data/personas.dat"
+  @archivo "data/personas.txt"
 
   # --------------------------------------------------
   # INICIO DEL SERVIDOR
@@ -106,11 +106,12 @@ defmodule Emergencia.PersonaServer do
       true ->
         persona = %{persona | documento: documento}
 
-        personas = Map.put(
-          estado.personas,
-          documento,
-          persona
-        )
+        personas =
+          Map.put(
+            estado.personas,
+            documento,
+            persona
+          )
 
         nuevo_estado = %{estado | personas: personas}
 
@@ -151,7 +152,6 @@ defmodule Emergencia.PersonaServer do
         _from,
         estado
       ) do
-
     documento = normalizar_documento(documento)
 
     case Map.get(estado.personas, documento) do
@@ -171,11 +171,12 @@ defmodule Emergencia.PersonaServer do
             historial: [cambio | persona.historial]
           }
 
-          personas = Map.put(
-            estado.personas,
-            documento,
-            persona_actualizada
-          )
+          personas =
+            Map.put(
+              estado.personas,
+              documento,
+              persona_actualizada
+            )
 
           nuevo_estado_servidor = %{
             estado |
@@ -198,7 +199,6 @@ defmodule Emergencia.PersonaServer do
         _from,
         estado
       ) do
-
     remitente = normalizar_documento(remitente)
     destinatario = normalizar_documento(destinatario)
 
@@ -221,11 +221,12 @@ defmodule Emergencia.PersonaServer do
           entregado: false
         }
 
-        mensajes = Map.put(
-          estado.mensajes,
-          mensaje.id,
-          mensaje
-        )
+        mensajes =
+          Map.put(
+            estado.mensajes,
+            mensaje.id,
+            mensaje
+          )
 
         nuevo_estado = %{estado | mensajes: mensajes}
 
@@ -241,7 +242,7 @@ defmodule Emergencia.PersonaServer do
       |> Map.values()
       |> Enum.filter(fn mensaje ->
         mensaje.remitente == documento or
-        mensaje.destinatario == documento
+          mensaje.destinatario == documento
       end)
 
     {:reply, mensajes, estado}
@@ -255,11 +256,12 @@ defmodule Emergencia.PersonaServer do
       mensaje ->
         actualizado = %{mensaje | entregado: true}
 
-        mensajes = Map.put(
-          estado.mensajes,
-          id_mensaje,
-          actualizado
-        )
+        mensajes =
+          Map.put(
+            estado.mensajes,
+            id_mensaje,
+            actualizado
+          )
 
         nuevo_estado = %{estado | mensajes: mensajes}
 
