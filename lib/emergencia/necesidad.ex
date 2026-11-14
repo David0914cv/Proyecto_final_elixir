@@ -137,4 +137,5 @@ defmodule Emergencia.Necesidad do
   defp validar_cantidad(_c), do: {:error, :cantidad_invalida}
 end
 
-end
+
+
